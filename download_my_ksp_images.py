@@ -14,7 +14,7 @@ login = getenv('login')
 password = getenv('password')
 first_loggin = getenv('first_loggin')
 
-shoot_id = 'KSP_013068'
+shoot_id = 'KSP_015339'
 image_folder = '/Volumes/big4photo-4/EDITED_JPEG_ARCHIV/Downloaded_from_fotoagency'
 download_dir = f'/Volumes/big4photo-4/EDITED_JPEG_ARCHIV/Downloaded_from_fotoagency/{shoot_id}'
 
