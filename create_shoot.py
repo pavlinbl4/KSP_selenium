@@ -14,7 +14,9 @@ login = getenv('login')
 password = getenv('password')
 first_loggin = getenv('first_loggin')
 
-def system_notification(number, shoot_caption):
+
+# def system_notification(number, shoot_caption):
+def system_notification():
     title = "Съемка создана"
     message = f"Съемка {number}: {shoot_caption} созданна"
     command = f'''
@@ -48,7 +50,8 @@ try:
     author_input.send_keys("Евгений Павленко")
 
     browser.find_element(By.CSS_SELECTOR,
-                         "body > table.logotbl > tbody > tr:nth-child(3) > td > table > tbody > tr > td:nth-child(2) > a").click()
+                         "body > table.logotbl > tbody > tr:nth-child(3) "
+                         "> td > table > tbody > tr > td:nth-child(2) > a").click()
     browser.find_element(By.ID,
                          "nav_shoots_change").click()
 
@@ -78,13 +81,10 @@ try:
     customer_input.send_keys(Keys.DOWN)
     customer_input.send_keys(Keys.ENTER)
 
-
-
     # выбираю бильдредактора с помощью класса Select
     editor = browser.find_element(By.ID, 'EditorContactID')
-    select = Select(browser.find_element(By.NAME,'EditorContactID'))
+    select = Select(browser.find_element(By.NAME, 'EditorContactID'))
     select.select_by_value('2571')
-
 
     author_input = browser.find_element(By.ID, "AuthorContact")
     author_input.send_keys("Павленко Евгений Валентинович")
@@ -96,13 +96,12 @@ try:
 
     browser.find_element(By.ID, 'SubmitBtn').click()
 
-    number = browser.find_element(By.ID,"shootnum").text
-    number = number.replace("№ ","KSP_0")
+    number = browser.find_element(By.ID, "shootnum").text
+    number = number.replace("№ ", "KSP_0")
     pyperclip.copy(number)
 
-    system_notification(number, shoot_caption)
-
-
+    # system_notification(number, shoot_caption)
+    system_notification()
 
     time.sleep(1)
     browser.close()
