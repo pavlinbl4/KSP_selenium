@@ -30,27 +30,28 @@ start_day = (datetime.today().replace(day=1) - timedelta(days=1))  # last day of
 print(f'{start_day = }')
 report_month = (datetime.today().replace(day=1) - timedelta(days=1)).strftime('%B')
 print(f'{report_month = }')
-report_day = (start_day - timedelta(days=30)).strftime(
+report_day = (start_day - timedelta(days=26)).strftime(
     "%d.%m.%Y")  # day than shift for some days from the last month day
 # In future, I want to change timedelta days from the first day in month to its end in cycle.
 print(f'{report_day = }')
+image_info = {}
+images_voc = {}
 
 report_web_link = 'https://image.kommersant.ru/photo/archive/pubhistory.asp?ID='
 
 
-def create_report_file(report_date):
-    month = datetime.today().strftime('%B')
+def create_report_file():
     report_folder = '/Volumes/big4photo/Documents/Kommersant/My_report_from_0107'
-    report_file_name = f"report_file_{month}.xlsx"
-    path_to_file = f'{report_folder}/{report_file_name}'
+    report_file_name = f"report_file_{report_month}.xlsx"
+    path = f'{report_folder}/{report_file_name}'
 
-    if os.path.exists(path_to_file):
-        wb = load_workbook(path_to_file)  # файл есть и открываю его
-        ws = wb.create_sheet(report_date)  # добавляю новую таблицу
+    if os.path.exists(path):
+        wb = load_workbook(path)  # файл есть и открываю его
+        ws = wb.create_sheet(report_day)  # добавляю новую таблицу
     else:
         wb = Workbook()  # если файда еще нет
         ws = wb.active  # если файа еще нет
-        ws.title = report_date  # если файда еще нет
+        ws.title = report_day  # если файда еще нет
 
     ws.column_dimensions['A'].width = 5
     ws.column_dimensions['B'].width = 25
@@ -59,18 +60,18 @@ def create_report_file(report_date):
     ws.column_dimensions['E'].width = 100
 
     ws['A1'] = 'number'
-    ws['B1'] = 'KSP_id'  # create columns names
+    ws['B1'] = 'ksp_id'  # create columns names
     ws['C1'] = 'date of publication'
     ws['D1'] = 'publication'
     ws['E1'] = 'material'
 
-    wb.save(path_to_file)
-    return path_to_file
+    wb.save(path)
+    return path
 
 
-def write_to_file(path_to_file, image_info, line_number, report_date):
+def write_to_file(line_number):
     wb = load_workbook(path_to_file)
-    ws = wb[report_date]
+    ws = wb[report_day]
     if len(image_info) > 0:
         ws[f'A{line_number + 2}'] = image_info['A']
         ws[f'B{line_number + 2}'] = image_info['B']
@@ -81,12 +82,12 @@ def write_to_file(path_to_file, image_info, line_number, report_date):
         wb.save(path_to_file)
 
 
-def save_html(html, k):
+def save_html():
     with open(f'scrap_report_{k}.html', 'w') as saved_file:
         saved_file.write(html)
 
 
-def publication_info(k, count):
+def publication_info():
     report_link = f'{report_web_link}{k}#web'
     browser.get(report_link)
     print(report_link)
@@ -95,7 +96,6 @@ def publication_info(k, count):
 
     soup = BeautifulSoup(report_html, 'lxml')
     all_publications = soup.find(id='Table1').find('tbody').find_all('tr')
-    image_info = {}
 
     for i in range(len(all_publications)):
         try:
@@ -110,9 +110,6 @@ def publication_info(k, count):
 
                 print(f"material - {all_publications[i].find_all('td')[5].text}")  # material
                 image_info["E"] = all_publications[i].find_all('td')[5].text
-
-
-
         finally:
             continue
 
@@ -120,17 +117,16 @@ def publication_info(k, count):
     return image_info
 
 
-def make_images_voc(images_links):
-    images_voc = {}
+def make_images_voc():
     for i in images_links:
-        KSP_id = re.findall(r'(?<=photocode=)\w{16}', str(i))[0]
+        ksp_id = re.findall(r'(?<=photocode=)\w{16}', str(i))[0]
         regex = r'(?<=photoid=)\d{7}(?=\")'
         photoid = re.findall(regex, str(i))[0]
-        images_voc[photoid] = KSP_id
+        images_voc[photoid] = ksp_id
     return images_voc
 
 
-def get_image_links(html):
+def get_image_links():
     soup = BeautifulSoup(html, 'lxml')
     return soup.find_all('table')[9].find('tbody').find_all(title="Добавить кадрировку")
 
@@ -202,18 +198,19 @@ def select_today_published_images():
 if __name__ == '__main__':
     browser = webdriver.Chrome(options=setting_chrome_options())
 
-    path_to_file = create_report_file(report_day)
+    path_to_file = create_report_file()
 
     html = select_today_published_images()
     published_images_amount()
-    images_links = get_image_links(html)
-    images_voc = make_images_voc(images_links)
+    images_links = get_image_links()
+    images_voc = make_images_voc()
 
     count = 0
     for k in images_voc:
         count += 1
-        image_info = publication_info(k, count)
-        write_to_file(path_to_file, image_info, count, report_day)
+        image_info = publication_info()
+        print(f'{image_info = }')
+        write_to_file(count)
 
     browser.close()
     browser.quit()
