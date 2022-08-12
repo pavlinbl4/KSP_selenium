@@ -1,7 +1,8 @@
 """
-check kommersant publications for yesterday
+script makes report for previous month and save it to file
+but in  some sheets (18.07.2022) I found blank lines
 """
-
+from calendar import monthrange
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from datetime import datetime, timedelta
@@ -20,19 +21,32 @@ load_dotenv()
 login = os.environ.get('login')
 password = os.environ.get('password')
 first_loggin = os.environ.get('first_loggin')
-day = datetime.today().strftime("%d.%m.%Y")
-yesterday = (datetime.now() - timedelta(days=1)).strftime("%d.%m.%Y")
+
 report_web_link = 'https://image.kommersant.ru/photo/archive/pubhistory.asp?ID='
+
+image_info = {}
+images_voc = {}
+
+
+def days_in_previous_month():  # days in last month
+    current_month = datetime.today().month
+    if current_month != 1:
+        previous_month = current_month - 1
+        report_year = datetime.today().year
+    else:
+        previous_month = 12
+        report_year = datetime.today().year - 1
+    return monthrange(report_year, previous_month)[1]
 
 
 def create_report_file(report_date):
-    month = datetime.today().strftime('%B')
+    report_month = (datetime.today().replace(day=1) - timedelta(days=1)).strftime('%B')
     report_folder = '/Volumes/big4photo/Documents/Kommersant/My_report_from_0107'
-    report_file_name = f"report_file_{month}.xlsx"
-    path_to_file = f'{report_folder}/{report_file_name}'
+    report_file_name = f"report_file_{report_month}.xlsx"
+    path = f'{report_folder}/{report_file_name}'
 
-    if os.path.exists(path_to_file):
-        wb = load_workbook(path_to_file)  # файл есть и открываю его
+    if os.path.exists(path):
+        wb = load_workbook(path)  # файл есть и открываю его
         ws = wb.create_sheet(report_date)  # добавляю новую таблицу
     else:
         wb = Workbook()  # если файда еще нет
@@ -51,41 +65,38 @@ def create_report_file(report_date):
     ws['D1'] = 'publication'
     ws['E1'] = 'material'
 
-    wb.save(path_to_file)
-    return path_to_file
+    wb.save(path)
+    return path
 
 
-def write_to_file(path_to_file, image_info, line_number, report_date):
+def write_to_file(line_number, report_date):
     wb = load_workbook(path_to_file)
     ws = wb[report_date]
-    ws[f'A{line_number + 2}'] = image_info['A']
-    ws[f'B{line_number + 2}'] = image_info['B']
-    ws[f'C{line_number + 2}'] = image_info['C']
-    ws[f'D{line_number + 2}'] = image_info['D']
-    ws[f'E{line_number + 2}'] = image_info['E']
+    if len(image_info) > 0:
+        ws[f'A{line_number + 2}'] = image_info['A']
+        ws[f'B{line_number + 2}'] = image_info['B']
+        ws[f'C{line_number + 2}'] = image_info['C']
+        ws[f'D{line_number + 2}'] = image_info['D']
+        ws[f'E{line_number + 2}'] = image_info['E']
 
     wb.save(path_to_file)
 
 
-def save_html(html, k):
+def save_html():
     with open(f'scrap_report_{k}.html', 'w') as saved_file:
         saved_file.write(html)
 
 
-def publication_info(k, count):
+def publication_info():
     report_link = f'{report_web_link}{k}#web'
     browser.get(report_link)
-    print(report_link)
+    print(f'{report_link = }')
     report_html = browser.page_source
-    # save_html(report_html, k)
-
     soup = BeautifulSoup(report_html, 'lxml')
     all_publications = soup.find(id='Table1').find('tbody').find_all('tr')
-    image_info = {}
-
     for i in range(len(all_publications)):
         try:
-            if yesterday in all_publications[i].find_all('td')[8].text:  # date of upload
+            if report_day in all_publications[i].find_all('td')[8].text:  # date of upload
                 print(f"{count} - {soup.find('h3').text}")
                 image_info['A'] = count
                 image_info['B'] = soup.find('h3').text[16:]
@@ -96,9 +107,6 @@ def publication_info(k, count):
 
                 print(f"material - {all_publications[i].find_all('td')[5].text}")  # material
                 image_info["E"] = all_publications[i].find_all('td')[5].text
-
-
-
         finally:
             continue
 
@@ -106,25 +114,24 @@ def publication_info(k, count):
     return image_info
 
 
-def make_images_voc(images_links):
-    images_voc = {}
-    for i in images_links:
-        KSP_id = re.findall(r'(?<=photocode=)\w{16}', str(i))[0]
+def make_images_voc():
+    for _ in images_links:
+        time.sleep(3)
+        ksp_id = re.findall(r'(?<=photocode=)\w{16}', str(_))[0]
         regex = r'(?<=photoid=)\d{7}(?=\")'
-        photoid = re.findall(regex, str(i))[0]
-        images_voc[photoid] = KSP_id
-    print(images_voc)
+        photoid = re.findall(regex, str(_))[0]
+        images_voc[photoid] = ksp_id
     return images_voc
 
 
-def get_image_links(html):
+def get_image_links():
     soup = BeautifulSoup(html, 'lxml')
     return soup.find_all('table')[9].find('tbody').find_all(title="Добавить кадрировку")
 
 
 def setting_chrome_options():
     chrome_options = Options()
-    # chrome_options.add_argument("--headless")  # фоновый режим
+    chrome_options.add_argument("--headless")  # фоновый режим
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")  # невидимость автоматизации
     chrome_options.add_argument(
         "user-agent=Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0")
@@ -137,7 +144,8 @@ def published_images_amount():
             browser.find_element(By.XPATH, '/html/body/table[3]/tbody/tr[1]/td[2]/table/tbody/tr[2]/td/b[1]').text
 
         print(f'used images {images_amount}\n')
-    except:
+    except Exception as ex:
+        print(ex)
         print('no published images in this day')
 
 
@@ -168,17 +176,16 @@ def select_today_published_images():
 
         data_input = browser.find_element(By.ID, "since")
         data_input.clear()
-        data_input.send_keys(yesterday)
+        data_input.send_keys(report_day)
 
         data_input = browser.find_element(By.ID, "till")
         data_input.clear()
-        data_input.send_keys(yesterday)
+        data_input.send_keys(report_day)
 
         browser.find_element(By.CSS_SELECTOR, '#searchbtn').click()
 
         try:
             alert = Alert(browser)
-            # print(alert.text)
             alert.accept()
             time.sleep(2)
         finally:
@@ -187,20 +194,26 @@ def select_today_published_images():
 
 
 if __name__ == '__main__':
-    browser = webdriver.Chrome(options=setting_chrome_options())
+    days_in_month = days_in_previous_month()
+    start_day = (datetime.today().replace(day=1) - timedelta(days=1))
+    for x in range(days_in_month - 1, -1, -1):
+        time.sleep(10)
+        browser = webdriver.Chrome(options=setting_chrome_options())
 
-    path_to_file = create_report_file(yesterday)  # 1 create report file or make new sheet in existing
+        report_day = (start_day - timedelta(days=x)).strftime("%d.%m.%Y")
+        print(f'{report_day = }')
 
-    html = select_today_published_images()  # 2 get html from page of published photos
-    published_images_amount()
-    images_links = get_image_links(html)  # 3 get list of published images
-    images_voc = make_images_voc(images_links)  # 4 create vocabulary internal_id:standart_id
+        path_to_file = create_report_file(report_day)
+        html = select_today_published_images()
+        published_images_amount()
+        images_links = get_image_links()
+        images_voc = make_images_voc()
 
-    count = 0
-    for k in images_voc:  # 5 in cycle check images in vocabulary and create report^ print it and write to xlsx  file
-        count += 1
-        image_info = publication_info(k, count)
-        write_to_file(path_to_file, image_info, count, yesterday)
+        count = 0
+        for k in images_voc:
+            count += 1
+            image_info = publication_info()
+            write_to_file(count, report_day)
 
-    browser.close()
-    browser.quit()
+        browser.close()
+        browser.quit()
