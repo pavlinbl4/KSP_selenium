@@ -28,6 +28,8 @@ first_loggin = os.environ.get('first_loggin')
 
 start_day = (datetime.today().replace(day=1) - timedelta(days=1))  # last day of previous month
 print(f'{start_day = }')
+report_month = (datetime.today().replace(day=1) - timedelta(days=1)).strftime('%B')
+print(f'{report_month = }')
 report_day = (start_day - timedelta(days=30)).strftime(
     "%d.%m.%Y")  # day than shift for some days from the last month day
 # In future, I want to change timedelta days from the first day in month to its end in cycle.
