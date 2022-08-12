@@ -1,3 +1,7 @@
+"""
+check kommersant publications for yesterday
+"""
+
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from datetime import datetime, timedelta
@@ -11,8 +15,6 @@ import re
 from selenium.webdriver.common.alert import Alert
 from openpyxl import load_workbook
 from openpyxl import Workbook
-
-
 
 load_dotenv()
 login = os.environ.get('login')
@@ -52,8 +54,8 @@ def create_report_file(report_date):
     wb.save(path_to_file)
     return path_to_file
 
-def write_to_file(path_to_file, image_info, line_number, report_date):
 
+def write_to_file(path_to_file, image_info, line_number, report_date):
     wb = load_workbook(path_to_file)
     ws = wb[report_date]
     ws[f'A{line_number + 2}'] = image_info['A']
@@ -89,7 +91,7 @@ def publication_info(k, count):
                 image_info['B'] = soup.find('h3').text[16:]
                 print(f"date of publication - {all_publications[i].find_all('td')[2].text}")  # date of publication
                 image_info["C"] = all_publications[i].find_all('td')[2].text
-                print(f"publication - {all_publications[i].find_all('td')[3].text}")   # publication
+                print(f"publication - {all_publications[i].find_all('td')[3].text}")  # publication
                 image_info["D"] = all_publications[i].find_all('td')[3].text
 
                 print(f"material - {all_publications[i].find_all('td')[5].text}")  # material
@@ -111,14 +113,13 @@ def make_images_voc(images_links):
         regex = r'(?<=photoid=)\d{7}(?=\")'
         photoid = re.findall(regex, str(i))[0]
         images_voc[photoid] = KSP_id
+    print(images_voc)
     return images_voc
 
 
 def get_image_links(html):
     soup = BeautifulSoup(html, 'lxml')
     return soup.find_all('table')[9].find('tbody').find_all(title="Добавить кадрировку")
-
-
 
 
 def setting_chrome_options():
@@ -140,7 +141,6 @@ def published_images_amount():
         print('no published images in this day')
 
 
-
 def autorization():  # авторизация на главной странице
     browser.get(first_loggin)
     login_input = browser.find_element(By.ID, "login")
@@ -154,7 +154,6 @@ def autorization():  # авторизация на главной страниц
 def select_today_published_images():
     autorization()
     time.sleep(1)
-
 
     try:
         alert = Alert(browser)
@@ -190,19 +189,18 @@ def select_today_published_images():
 if __name__ == '__main__':
     browser = webdriver.Chrome(options=setting_chrome_options())
 
-    path_to_file = create_report_file(yesterday)
+    path_to_file = create_report_file(yesterday)  # 1 create report file or make new sheet in existing
 
-    html = select_today_published_images()
+    html = select_today_published_images()  # 2 get html from page of published photos
     published_images_amount()
-    images_links = get_image_links(html)
-    images_voc = make_images_voc(images_links)
+    images_links = get_image_links(html)  # 3 get list of published images
+    images_voc = make_images_voc(images_links)  # 4 create vocabulary internal_id:standart_id
 
     count = 0
-    for k in images_voc:
+    for k in images_voc:  # 5 in cycle check images in vocabulary and create report^ print it and write to xlsx  file
         count += 1
-        image_info = publication_info(k,count)
-        write_to_file(path_to_file, image_info,count,yesterday)
-
+        image_info = publication_info(k, count)
+        write_to_file(path_to_file, image_info, count, yesterday)
 
     browser.close()
     browser.quit()
