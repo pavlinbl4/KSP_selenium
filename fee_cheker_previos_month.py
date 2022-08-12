@@ -1,6 +1,6 @@
 """
 script makes report for previous month and save it to file
-but  jy some sheets^ (18.07.2022) I found blank lines
+but in  some sheets (18.07.2022) I found blank lines
 """
 from calendar import monthrange
 from selenium import webdriver
@@ -24,8 +24,8 @@ first_loggin = os.environ.get('first_loggin')
 
 report_web_link = 'https://image.kommersant.ru/photo/archive/pubhistory.asp?ID='
 
-
-# day = datetime.today().strftime("%d.%m.%Y")
+image_info = {}
+images_voc = {}
 
 
 def days_in_previous_month():  # days in last month
@@ -43,10 +43,10 @@ def create_report_file(report_date):
     report_month = (datetime.today().replace(day=1) - timedelta(days=1)).strftime('%B')
     report_folder = '/Volumes/big4photo/Documents/Kommersant/My_report_from_0107'
     report_file_name = f"report_file_{report_month}.xlsx"
-    path_to_file = f'{report_folder}/{report_file_name}'
+    path = f'{report_folder}/{report_file_name}'
 
-    if os.path.exists(path_to_file):
-        wb = load_workbook(path_to_file)  # файл есть и открываю его
+    if os.path.exists(path):
+        wb = load_workbook(path)  # файл есть и открываю его
         ws = wb.create_sheet(report_date)  # добавляю новую таблицу
     else:
         wb = Workbook()  # если файда еще нет
@@ -65,11 +65,11 @@ def create_report_file(report_date):
     ws['D1'] = 'publication'
     ws['E1'] = 'material'
 
-    wb.save(path_to_file)
-    return path_to_file
+    wb.save(path)
+    return path
 
 
-def write_to_file(path_to_file, image_info, line_number, report_date):
+def write_to_file(line_number, report_date):
     wb = load_workbook(path_to_file)
     ws = wb[report_date]
     if len(image_info) > 0:
@@ -82,22 +82,18 @@ def write_to_file(path_to_file, image_info, line_number, report_date):
     wb.save(path_to_file)
 
 
-def save_html(html, k):
+def save_html():
     with open(f'scrap_report_{k}.html', 'w') as saved_file:
         saved_file.write(html)
 
 
-def publication_info(k, count):
+def publication_info():
     report_link = f'{report_web_link}{k}#web'
     browser.get(report_link)
-    print(report_link)
+    print(f'{report_link = }')
     report_html = browser.page_source
-    # save_html(report_html, k)
-
     soup = BeautifulSoup(report_html, 'lxml')
     all_publications = soup.find(id='Table1').find('tbody').find_all('tr')
-    image_info = {}
-
     for i in range(len(all_publications)):
         try:
             if report_day in all_publications[i].find_all('td')[8].text:  # date of upload
@@ -118,18 +114,17 @@ def publication_info(k, count):
     return image_info
 
 
-def make_images_voc(images_links):
-    images_voc = {}
-    for i in images_links:
+def make_images_voc():
+    for _ in images_links:
         time.sleep(3)
-        ksp_id = re.findall(r'(?<=photocode=)\w{16}', str(i))[0]
+        ksp_id = re.findall(r'(?<=photocode=)\w{16}', str(_))[0]
         regex = r'(?<=photoid=)\d{7}(?=\")'
-        photoid = re.findall(regex, str(i))[0]
+        photoid = re.findall(regex, str(_))[0]
         images_voc[photoid] = ksp_id
     return images_voc
 
 
-def get_image_links(html):
+def get_image_links():
     soup = BeautifulSoup(html, 'lxml')
     return soup.find_all('table')[9].find('tbody').find_all(title="Добавить кадрировку")
 
@@ -149,7 +144,8 @@ def published_images_amount():
             browser.find_element(By.XPATH, '/html/body/table[3]/tbody/tr[1]/td[2]/table/tbody/tr[2]/td/b[1]').text
 
         print(f'used images {images_amount}\n')
-    except:
+    except Exception as ex:
+        print(ex)
         print('no published images in this day')
 
 
@@ -190,7 +186,6 @@ def select_today_published_images():
 
         try:
             alert = Alert(browser)
-            # print(alert.text)
             alert.accept()
             time.sleep(2)
         finally:
@@ -199,27 +194,26 @@ def select_today_published_images():
 
 
 if __name__ == '__main__':
-
-
     days_in_month = days_in_previous_month()
     start_day = (datetime.today().replace(day=1) - timedelta(days=1))
-    for i in range(days_in_month - 1, -1, -1):
+    for x in range(days_in_month - 1, -1, -1):
         time.sleep(10)
         browser = webdriver.Chrome(options=setting_chrome_options())
 
-        report_day = (start_day - timedelta(days=i)).strftime("%d.%m.%Y")
+        report_day = (start_day - timedelta(days=x)).strftime("%d.%m.%Y")
+        print(f'{report_day = }')
 
         path_to_file = create_report_file(report_day)
         html = select_today_published_images()
         published_images_amount()
-        images_links = get_image_links(html)
-        images_voc = make_images_voc(images_links)
+        images_links = get_image_links()
+        images_voc = make_images_voc()
 
         count = 0
         for k in images_voc:
             count += 1
-            image_info = publication_info(k, count)
-            write_to_file(path_to_file, image_info, count, report_day)
+            image_info = publication_info()
+            write_to_file(count, report_day)
 
         browser.close()
         browser.quit()
