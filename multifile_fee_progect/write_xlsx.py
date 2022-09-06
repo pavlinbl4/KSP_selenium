@@ -24,7 +24,7 @@ def write_xlsx_single_sheet(path_to_file, image_info):
     wb.save(path_to_file)
 
 
-path_to_file = '/Users/evgeniy/Documents/Kommersant/My_report_from_0107/report_file_July_test.xlsx'
-
-image_info = make_random_voc(5)
-write_xlsx_single_sheet(path_to_file, image_info)
+# path_to_file = '/Users/evgeniy/Documents/Kommersant/My_report_from_0107/report_file_July_test.xlsx'
+#
+# image_info = make_random_voc(5)
+# write_xlsx_single_sheet(path_to_file, image_info)
