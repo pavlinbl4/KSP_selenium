@@ -23,7 +23,7 @@ images_links = get_image_links(html)  # 3 get list of published images
 images_voc = make_images_voc(images_links)  # 4 create vocabulary internal_id:standart_id
 
 # 5 in cycle check images in vocabulary and create report print it and write to xlsx  file
-images_in_cycle(images_voc, path_to_file)
+images_in_cycle(images_voc, path_to_file, check_date)
 
 # close browser
 end()
