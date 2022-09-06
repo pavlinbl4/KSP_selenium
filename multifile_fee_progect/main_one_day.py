@@ -9,7 +9,7 @@ from images_links import get_image_links
 from images_vocabulary import make_images_voc
 from check_published_images import images_in_cycle
 
-# create class element for kommersant days
+# create class element for kommersant dates
 kd = KommersantDates()
 
 check_date = kd.yesterday
