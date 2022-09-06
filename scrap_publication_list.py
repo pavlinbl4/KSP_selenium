@@ -4,7 +4,7 @@ get real publication for the image KP archive
 
 from bs4 import BeautifulSoup
 
-publication_page = '/Users/evgeniy/Desktop/test_page/Kommersant Photo Archive История публикаций_2.html'
+publication_page = '/Users/evgeniy/Documents/Kommersant/Kommersant Photo Archive История публикаций.html'
 
 with open(publication_page, 'r') as file:  # read offline  html page
     html = file.read()

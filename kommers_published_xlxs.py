@@ -22,11 +22,8 @@ print(login)
 
 current_year = datetime.now().year
 
-
-
 month_number = int(input("введите номер месяца\n"))
 day_in_month = calendar.mdays[month_number]
-
 
 options = webdriver.ChromeOptions()
 options.add_argument("user-agent=Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0")
@@ -48,13 +45,14 @@ try:
     select.select_by_value("3")
 
     # записываем в xlxs
-    book = load_workbook("/Volumes/big4photo/Documents/Kommersant/publications/shoot_publications.xlsx")  # открываю существующий файл для дозаписи
+    book = load_workbook(
+        "/Volumes/big4photo/Documents/Kommersant/publications/shoot_publications.xlsx")  # открываю существующий файл для дозаписи
     # sheet = book.active
     ws_month_number = book.create_sheet(f"{current_year}_{calendar.month_name[month_number]}", 0)
 
     publications = {}
     for i in range(1, day_in_month + 1):
-        day = str(i) + f".{month_number}.{current_year}"   # автоматизировать год
+        day = str(i) + f".{month_number}.{current_year}"  # автоматизировать год
         publications[day] = []
 
         # вставляем сегодняшнюю дату в меню поиска
@@ -68,9 +66,7 @@ try:
 
         browser.find_element(By.ID, "searchbtn").click()
 
-        images_id = browser.find_elements(By.CLASS_NAME,"code")  # нахожу коды всех снимков на странице
-
-
+        images_id = browser.find_elements(By.CLASS_NAME, "code")  # нахожу коды всех снимков на странице
 
         ws_month_number.cell(row=1, column=1).value = "Дата"
         ws_month_number.cell(row=3, column=1).value = "photo id"
@@ -81,7 +77,6 @@ try:
                 count += 1
                 ws_month_number.cell(row=2 + count, column=1 + i).value = id.text[4:20]
         ws_month_number.cell(row=1, column=1 + i).value = day
-
 
         book.save(f"/Volumes/big4photo/Documents/Kommersant/publications/shoot_publications.xlsx")
         book.close()

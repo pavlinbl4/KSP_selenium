@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 import os
 from kommersant_dates import KommersantDates
 from bs4 import BeautifulSoup
+from save_page_html import save_html_page
 
 # import credentials
 load_dotenv()
@@ -28,9 +29,9 @@ def autorization():  # авторизация на главной страниц
     browser.find_element(By.CSS_SELECTOR, '#au').send_keys('Евгений Павленко')
 
 
-def select_today_published_images():
-    autorization()
-    time.sleep(1)
+def select_published_images(report_date):
+    # autorization()
+    # time.sleep(1)
 
     try:
         alert = Alert(browser)
@@ -45,11 +46,11 @@ def select_today_published_images():
 
         data_input = browser.find_element(By.ID, "since")
         data_input.clear()
-        data_input.send_keys(yesterday)
+        data_input.send_keys(report_date)
 
         data_input = browser.find_element(By.ID, "till")
         data_input.clear()
-        data_input.send_keys(yesterday)
+        data_input.send_keys(report_date)
 
         browser.find_element(By.CSS_SELECTOR, '#searchbtn').click()
 
@@ -62,19 +63,22 @@ def select_today_published_images():
             return browser.page_source
 
 
-def publication_info(k, count):
+def publication_info(k, count, report_date):
     report_link = f'{report_web_link}{k}#web'
     browser.get(report_link)
-    print(report_link)
+    # print(f'{report_link = } in publication_info')
     report_html = browser.page_source
+
+    save_html_page(report_html)
 
     soup = BeautifulSoup(report_html, 'lxml')
     all_publications = soup.find(id='Table1').find('tbody').find_all('tr')
     image_info = {}
 
     for i in range(len(all_publications)):
+        print(all_publications)
         try:
-            if yesterday in all_publications[i].find_all('td')[8].text:  # date of upload
+            if report_date in all_publications[i].find_all('td')[8].text:  # date of upload
                 print(f"{count} - {soup.find('h3').text}")
                 image_info['A'] = count
                 image_info['B'] = soup.find('h3').text[16:]
@@ -99,4 +103,3 @@ def end():
 
 
 browser = webdriver.Chrome(options=setting_chrome_options())
-yesterday = KommersantDates().yesterday
