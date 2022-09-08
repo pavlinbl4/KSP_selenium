@@ -4,6 +4,10 @@ get real publication for the image KP archive
 
 from bs4 import BeautifulSoup
 
+red = '\033[91m'
+green = '\33[32m'
+end = '\033[0m'
+
 
 def image_publications_voc(report_html):
     soup = BeautifulSoup(report_html, 'lxml')
@@ -23,37 +27,36 @@ def image_publications_voc(report_html):
         return main_table.find(class_="tblh3").find_next(class_="tblh3") \
             .find_all_previous('tr', class_='electron')
 
-
     if main_table.find(class_="tblh3") is None:  # no table "другие фотографии этой съемки" on the page
         main_table_paper = main_table_paper_only()
         main_table_electron = main_table_electron_only()
 
-    elif main_table.find(class_="tblh3") is not None and main_table.find(class_="tblh3").find_next(class_="tblh3") is not None:
+    elif main_table.find(class_="tblh3") is not None and main_table.find(class_="tblh3").find_next(
+            class_="tblh3") is not None:
         main_table_paper = main_table_paper_other()
         main_table_electron = main_table_electron_other()
 
-    elif main_table.find(class_="tblh3") is not None and main_table.find(class_="tblh3").find_next(class_="tblh3") is None:
-        main_table_paper = main_table_paper_other
+    elif main_table.find(class_="tblh3") is not None and main_table.find(class_="tblh3").find_next(
+            class_="tblh3") is None:
+        main_table_paper = main_table_paper_other()
         main_table_electron = main_table_electron_only()
 
     elif main_table.find(class_="tblh3") is None and main_table.find(class_="tblh3").find_next(
             class_="tblh3") is not None:
         main_table_paper = main_table_paper_only()
         main_table_electron = main_table_electron_other()
-
     work_tables = [main_table_paper, main_table_electron]
 
-    publication_voc = {}
-    publication_voc[0] = soup.find('h3').text[16:].strip()
+    publication_voc = {0: soup.find('h3').text[16:].strip()}
     count = 1
     for table in work_tables:  # make same operation for two different tables
         for i in table:
 
-            pub_check = i.find('td',class_='center').find('img')
+            pub_check = i.find('td', class_='center').find('img')
+            shift = 0
             if len(i) == 9:
                 shift = 1
-            elif len(i) == 8:
-                shift = 0
+
             if pub_check is not None:
                 if pub_check.get('src').split('/')[-1] == 'yes.gif':
                     publication_date = i.find_all('td')[1 + shift].text[:10]
@@ -62,13 +65,3 @@ def image_publications_voc(report_html):
                     publication_voc[count] = [publication_date, publication_place, material]
                     count += 1
     return publication_voc
-
-
-# test
-
-# offline_html = '/Users/evgeniy/Desktop/test_page/Kommersant Photo Archive История публикаций.html'
-# with open(offline_html, 'r') as file:  # read offline  html page
-#     report_html = file.read()
-# image_publications_voc(report_html)
-# for _ in image_publications_voc(report_html).items():
-#     print(_)
