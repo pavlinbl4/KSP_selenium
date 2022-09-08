@@ -61,7 +61,9 @@ def image_publications_voc(report_html):
                 if pub_check.get('src').split('/')[-1] == 'yes.gif':
                     publication_date = i.find_all('td')[1 + shift].text[:10]
                     publication_place = i.find_all('td')[2 + shift].text.strip()
+                    send_date = i.find_all('td')[7 + shift].text.strip()[:10]  # дата засыла снимка
+                    # print(f"{i.find_all('td')[7 + shift].text.strip() = }")
                     material = i.find_all('td')[4 + shift].text.strip()
-                    publication_voc[count] = [publication_date, publication_place, material]
+                    publication_voc[count] = [publication_date, publication_place, material, send_date]
                     count += 1
     return publication_voc
