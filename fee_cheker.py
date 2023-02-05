@@ -15,6 +15,9 @@ import re
 from selenium.webdriver.common.alert import Alert
 from openpyxl import load_workbook
 from openpyxl import Workbook
+import logging
+from folder_in_MY_documents import make_documets_folder
+
 
 load_dotenv()
 login = os.environ.get('login')
@@ -27,7 +30,10 @@ report_web_link = 'https://image.kommersant.ru/photo/archive/pubhistory.asp?ID='
 
 def create_report_file(report_date):
     month = datetime.today().strftime('%B')
-    report_folder = '/Volumes/big4photo/Documents/Kommersant/My_report_from_0107'
+    month_name = datetime.now().month
+    current_year = datetime.now().year
+    report_folder = f"{make_documets_folder('Kommersant')}/{current_year}_{month_name}"
+    os.makedirs(report_folder, exist_ok=True)
     report_file_name = f"report_file_{month}.xlsx"
     path_to_file = f'{report_folder}/{report_file_name}'
 
@@ -76,7 +82,6 @@ def publication_info(k, count):
     browser.get(report_link)
     print(report_link)
     report_html = browser.page_source
-    # save_html(report_html, k)
 
     soup = BeautifulSoup(report_html, 'lxml')
     all_publications = soup.find(id='Table1').find('tbody').find_all('tr')
@@ -92,12 +97,8 @@ def publication_info(k, count):
                 image_info["C"] = all_publications[i].find_all('td')[2].text
                 print(f"publication - {all_publications[i].find_all('td')[3].text}")  # publication
                 image_info["D"] = all_publications[i].find_all('td')[3].text
-
                 print(f"material - {all_publications[i].find_all('td')[5].text}")  # material
                 image_info["E"] = all_publications[i].find_all('td')[5].text
-
-
-
         finally:
             continue
 
@@ -108,10 +109,10 @@ def publication_info(k, count):
 def make_images_voc(images_links):
     images_voc = {}
     for i in images_links:
-        KSP_id = re.findall(r'(?<=photocode=)\w{16}', str(i))[0]
+        ksp_id = re.findall(r'(?<=photocode=)\w{16}', str(i))[0]
         regex = r'(?<=photoid=)\d{7}(?=\")'
         photoid = re.findall(regex, str(i))[0]
-        images_voc[photoid] = KSP_id
+        images_voc[photoid] = ksp_id
     print(images_voc)
     return images_voc
 
@@ -134,9 +135,9 @@ def published_images_amount():
     try:
         images_amount = \
             browser.find_element(By.XPATH, '/html/body/table[3]/tbody/tr[1]/td[2]/table/tbody/tr[2]/td/b[1]').text
-
         print(f'used images {images_amount}\n')
-    except:
+    except Exception as e:
+        logging.exception(e)
         print('no published images in this day')
 
 
@@ -177,7 +178,6 @@ def select_today_published_images():
 
         try:
             alert = Alert(browser)
-            # print(alert.text)
             alert.accept()
             time.sleep(2)
         finally:
@@ -187,16 +187,14 @@ def select_today_published_images():
 
 if __name__ == '__main__':
     browser = webdriver.Chrome(options=setting_chrome_options())
-
     path_to_file = create_report_file(yesterday)  # 1 create report file or make new sheet in existing
-
     html = select_today_published_images()  # 2 get html from page of published photos
-    published_images_amount()
+    published_images_amount()  # show on display amount of published images
     images_links = get_image_links(html)  # 3 get list of published images
     images_voc = make_images_voc(images_links)  # 4 create vocabulary internal_id:standart_id
 
     count = 0
-    for k in images_voc:  # 5 in cycle check images in vocabulary and create report^ print it and write to xlsx  file
+    for k in images_voc:  # 5 in cycle check images in vocabulary and create report print it and write to xlsx  file
         count += 1
         image_info = publication_info(k, count)
         write_to_file(path_to_file, image_info, count, yesterday)
