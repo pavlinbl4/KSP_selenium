@@ -12,3 +12,8 @@ def custom_month_date(month_number):
     return months_name, check_date, end_month, current_year
 
 
+if __name__ == '__main__':
+    print(custom_month_date(5))
+
+
+
