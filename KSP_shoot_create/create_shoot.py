@@ -7,9 +7,10 @@ from selenium.webdriver.common.by import By
 import pyperclip
 import os
 from credentials import get_credentials
+from crome_options import setting_chrome_options
 
 
-def system_notification(number, shoot_caption):
+def system_notification():
     title = "Съемка создана"
     message = f"Съемка {number}: {shoot_caption} созданна"
     command = f'''
@@ -18,15 +19,11 @@ def system_notification(number, shoot_caption):
     os.system(command)
 
 
-login, password, first_loggin  = get_credentials()
-
+login, password, first_loggin = get_credentials()  #
 today_date = f'{datetime.now().strftime("%d.%m.%Y")}'
-
 shoot_caption = input("Введите описание съемки\n")
 
-options = webdriver.ChromeOptions()
-options.add_argument("user-agent=Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0")
-browser = webdriver.Chrome(options=options)
+browser = webdriver.Chrome(options=setting_chrome_options())
 
 try:
     browser.get(first_loggin)
@@ -41,7 +38,8 @@ try:
     author_input.send_keys("Евгений Павленко")
 
     browser.find_element(By.CSS_SELECTOR,
-                         "body > table.logotbl > tbody > tr:nth-child(3) > td > table > tbody > tr > td:nth-child(2) > a").click()
+                         "body > table.logotbl > tbody > tr:nth-child(3)"
+                         " > td > table > tbody > tr > td:nth-child(2) > a").click()
     browser.find_element(By.ID,
                          "nav_shoots_change").click()
 
@@ -90,7 +88,7 @@ try:
     number = number.replace("№ ", "KSP_0")
     pyperclip.copy(number)
 
-    system_notification(number, shoot_caption)
+    system_notification()
 
     time.sleep(1)
     browser.close()
