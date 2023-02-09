@@ -7,15 +7,11 @@ from selenium.webdriver.support.ui import Select
 import os
 from bs4 import BeautifulSoup
 from selenium.webdriver.chrome.options import Options
-from dotenv import load_dotenv
-from os import getenv
+from credentials import get_credentials
 
-load_dotenv()
-login = getenv('login')
-password = getenv('password')
-first_loggin = getenv('first_loggin')
 
-# shoot_id = 'KSP_016838'
+
+
 shoot_id = input("input shoot id look like 'KSP_017***'")
 image_folder = '/Volumes/big4photo-4/EDITED_JPEG_ARCHIV/Downloaded_from_fotoagency'
 download_dir = f'/Volumes/big4photo-4/EDITED_JPEG_ARCHIV/Downloaded_from_fotoagency/{shoot_id}'
@@ -95,6 +91,7 @@ def create_folder(shoot_id):
 
 
 def autorization(shoot_id):  # авторизация гна главной странице
+    login, password, first_loggin = get_credentials()
     create_folder(shoot_id)  # создаю папку для скачивания снимков
     browser.get(first_loggin)
     login_input = browser.find_element(By.ID, "login")
