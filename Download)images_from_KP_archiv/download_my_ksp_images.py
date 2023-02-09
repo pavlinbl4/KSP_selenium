@@ -1,3 +1,5 @@
+"""script download my published shoots to selected folder"""
+
 from selenium import webdriver
 import time
 from selenium.webdriver.common.by import By
@@ -8,13 +10,13 @@ from selenium.webdriver.chrome.options import Options
 from dotenv import load_dotenv
 from os import getenv
 
-
 load_dotenv()
 login = getenv('login')
 password = getenv('password')
 first_loggin = getenv('first_loggin')
 
-shoot_id = 'KSP_015339'
+# shoot_id = 'KSP_016838'
+shoot_id = input("input shoot id look like 'KSP_017***'")
 image_folder = '/Volumes/big4photo-4/EDITED_JPEG_ARCHIV/Downloaded_from_fotoagency'
 download_dir = f'/Volumes/big4photo-4/EDITED_JPEG_ARCHIV/Downloaded_from_fotoagency/{shoot_id}'
 
@@ -24,19 +26,19 @@ def setting_chrome_options():
     chrome_options.add_argument("--headless")
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")  # невидимость автоматизации
-    chrome_options.add_argument("user-agent=Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0")
+    chrome_options.add_argument(
+        "user-agent=Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0")
     return chrome_options
+
 
 def enable_download(browser):
     browser.command_executor._commands["send_command"] = ("POST", '/session/$sessionId/chromium/send_command')
-    params = {'cmd':'Page.setDownloadBehavior', 'params': {'behavior': 'allow', 'downloadPath': download_dir}}
+    params = {'cmd': 'Page.setDownloadBehavior', 'params': {'behavior': 'allow', 'downloadPath': download_dir}}
     browser.execute("send_command", params)
-
 
 
 browser = webdriver.Chrome(options=setting_chrome_options())
 enable_download(browser)
-
 
 
 def make_shoot_edit_link(link):
@@ -50,8 +52,8 @@ def get_image_links(html):
     tbody = table.find('tbody')
     images_links = tbody.find_all(title="Добавить кадрировку")
     return images_links
-#
-#
+
+
 def go_my_images(page_link) -> object:
     browser.get(page_link)
     browser.save_screenshot(f'screen_short_{page_link[-3:]}.png')
@@ -73,7 +75,6 @@ def main_cycle(images_number, shoot_link):
                                  f"div.hi-subpanel:nth-child(3) > a:nth-child(4)").click()
 
 
-
 def images_number_in_shot():
     try:
         images_number = \
@@ -81,9 +82,10 @@ def images_number_in_shot():
                                  'body > table:nth-child(6) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(2) > '
                                  'table:nth-child(1) > tbody:nth-child(1) > tr:nth-child(2) > '
                                  'td:nth-child(1) > b:nth-child(1)').text
+        print('test for image number CCS selector')
     except:
         print('снимков с данным ключевым словом не найдено')
-        images_number = 0
+        images_number = '0'
     images_number = int(images_number.replace(' ', ''))  # удаляю возможные пробелы перед преобразованием в целое число
     return images_number
 
@@ -108,7 +110,6 @@ def autorization(shoot_id):  # авторизация гна главной ст
     browser.save_screenshot(f'{image_folder}/{shoot_id}/Screen_short_{shoot_id}.png')  # создаю скриншот для проверки
     shoot_link = browser.current_url[:-1]
     return shoot_link
-
 
 
 shoot_link = autorization(shoot_id)  # авторизируюсь и получаю ссылку на данную съемку
