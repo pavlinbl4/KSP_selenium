@@ -12,11 +12,6 @@ from credentials import get_credentials
 
 
 
-shoot_id = input("input shoot id look like 'KSP_017***'")
-image_folder = '/Volumes/big4photo-4/EDITED_JPEG_ARCHIV/Downloaded_from_fotoagency'
-download_dir = f'/Volumes/big4photo-4/EDITED_JPEG_ARCHIV/Downloaded_from_fotoagency/{shoot_id}'
-
-
 def setting_chrome_options():
     chrome_options = Options()
     chrome_options.add_argument("--headless")
@@ -33,8 +28,7 @@ def enable_download(browser):
     browser.execute("send_command", params)
 
 
-browser = webdriver.Chrome(options=setting_chrome_options())
-enable_download(browser)
+
 
 
 def make_shoot_edit_link(link):
@@ -108,11 +102,18 @@ def autorization(shoot_id):  # авторизация гна главной ст
     shoot_link = browser.current_url[:-1]
     return shoot_link
 
+if __name__ == '__main__':
+    shoot_id = input("input shoot id look like 'KSP_017***'")
+    image_folder = '/Volumes/big4photo-4/EDITED_JPEG_ARCHIV/Downloaded_from_fotoagency'
+    download_dir = f'/Volumes/big4photo-4/EDITED_JPEG_ARCHIV/Downloaded_from_fotoagency/{shoot_id}'
 
-shoot_link = autorization(shoot_id)  # авторизируюсь и получаю ссылку на данную съемку
-images_number = images_number_in_shot()  # int число с количеством снимков в съемке
-print(f'{images_number = }')
-main_cycle(images_number, shoot_link)
-time.sleep(15)
-browser.close()
-browser.quit()
+    browser = webdriver.Chrome(options=setting_chrome_options())
+    enable_download(browser)
+
+    shoot_link = autorization(shoot_id)  # авторизируюсь и получаю ссылку на данную съемку
+    images_number = images_number_in_shot()  # int число с количеством снимков в съемке
+    print(f'{images_number = }')
+    main_cycle(images_number, shoot_link)
+    time.sleep(15)
+    browser.close()
+    browser.quit()
