@@ -124,7 +124,7 @@ def get_image_links(html):
 
 def setting_chrome_options():
     chrome_options = Options()
-    # chrome_options.add_argument("--headless")  # фоновый режим
+    chrome_options.add_argument("--headless")  # фоновый режим
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")  # невидимость автоматизации
     chrome_options.add_argument(
         "user-agent=Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0")
@@ -135,7 +135,7 @@ def published_images_amount():
     try:
         images_amount = \
             browser.find_element(By.XPATH, '/html/body/table[3]/tbody/tr[1]/td[2]/table/tbody/tr[2]/td/b[1]').text
-        print(f'used images {images_amount}\n')
+        # print(f'used images {images_amount}\n')
     except Exception as e:
         logging.exception(e)
         print('no published images in this day')
@@ -198,6 +198,5 @@ if __name__ == '__main__':
         count += 1
         image_info = publication_info(k, count)
         write_to_file(path_to_file, image_info, count, yesterday)
-
     browser.close()
     browser.quit()
