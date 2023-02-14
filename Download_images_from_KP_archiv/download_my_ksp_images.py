@@ -8,8 +8,13 @@ import os
 from bs4 import BeautifulSoup
 from selenium.webdriver.chrome.options import Options
 from credentials import get_credentials
+from notification import system_notification
+from tkinter import filedialog
 
 
+def select_folder():
+    return filedialog.askdirectory(initialdir='/Volumes/big4photo-4/EDITED_JPEG_ARCHIV/Downloaded_from_fotoagency',
+                                   title="Select your Source directory")
 
 
 def setting_chrome_options():
@@ -22,13 +27,10 @@ def setting_chrome_options():
     return chrome_options
 
 
-def enable_download(browser):
+def enable_download():
     browser.command_executor._commands["send_command"] = ("POST", '/session/$sessionId/chromium/send_command')
     params = {'cmd': 'Page.setDownloadBehavior', 'params': {'behavior': 'allow', 'downloadPath': download_dir}}
     browser.execute("send_command", params)
-
-
-
 
 
 def make_shoot_edit_link(link):
@@ -46,12 +48,11 @@ def get_image_links(html):
 
 def go_my_images(page_link) -> object:
     browser.get(page_link)
-    browser.save_screenshot(f'screen_short_{page_link[-3:]}.png')
     html = browser.page_source
     return html
 
 
-def main_cycle(images_number, shoot_link):
+def main_cycle():
     range_number = images_number // 100 + 2  # количиство страниц выданных поиском
     for x in range(1, range_number):  # цикл по страницам съемки
         page_link = f'{shoot_link}2&pg={x}'  # ссылка на страницу с номером
@@ -67,26 +68,24 @@ def main_cycle(images_number, shoot_link):
 
 def images_number_in_shot():
     try:
-        images_number = \
-            browser.find_element(By.CSS_SELECTOR,
-                                 'body > table:nth-child(6) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(2) > '
-                                 'table:nth-child(1) > tbody:nth-child(1) > tr:nth-child(2) > '
-                                 'td:nth-child(1) > b:nth-child(1)').text
-        print('test for image number CCS selector')
-    except:
+        return int((browser.find_element(By.CSS_SELECTOR,
+                                         'body > table:nth-child(6) '
+                                         '> tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(2) > '
+                                         'table:nth-child(1) > tbody:nth-child(1) > tr:nth-child(2) > '
+                                         'td:nth-child(1) > b:nth-child(1)').text).replace(' ', ''))
+    except Exception as ex:
+        print(ex)
         print('снимков с данным ключевым словом не найдено')
-        images_number = '0'
-    images_number = int(images_number.replace(' ', ''))  # удаляю возможные пробелы перед преобразованием в целое число
-    return images_number
+        return '0'
 
 
-def create_folder(shoot_id):
+def create_folder():
     os.makedirs(f'{image_folder}/{shoot_id}', exist_ok=True)
 
 
-def autorization(shoot_id):  # авторизация гна главной странице
+def autorization():  # авторизация гна главной странице
     login, password, first_loggin = get_credentials()
-    create_folder(shoot_id)  # создаю папку для скачивания снимков
+    create_folder()  # создаю папку для скачивания снимков
     browser.get(first_loggin)
     login_input = browser.find_element(By.ID, "login")
     login_input.send_keys(login)
@@ -94,26 +93,26 @@ def autorization(shoot_id):  # авторизация гна главной ст
     password_input.send_keys(password)
     browser.find_element(By.CSS_SELECTOR, ".system input.but").click()
     browser.find_element(By.CSS_SELECTOR, '#code').send_keys(shoot_id)  # ввожу номер съемки
-    # browser.find_element(By.CSS_SELECTOR,'#lib0').click() # выбор только KP фото в данном случае не нужен
     select = Select(browser.find_element(By.NAME, 'ps'))
     select.select_by_value('100')
     browser.find_element(By.CSS_SELECTOR, '#searchbtn').click()
     browser.save_screenshot(f'{image_folder}/{shoot_id}/Screen_short_{shoot_id}.png')  # создаю скриншот для проверки
-    shoot_link = browser.current_url[:-1]
-    return shoot_link
+    return browser.current_url[:-1]  # return shoot link
+
 
 if __name__ == '__main__':
-    shoot_id = input("input shoot id look like 'KSP_017***'")
-    image_folder = '/Volumes/big4photo-4/EDITED_JPEG_ARCHIV/Downloaded_from_fotoagency'
-    download_dir = f'/Volumes/big4photo-4/EDITED_JPEG_ARCHIV/Downloaded_from_fotoagency/{shoot_id}'
+    shoot_id = input("input shoot id look like 'KSP_017***'\n")
+    image_folder = select_folder()
+    download_dir = f'{image_folder}/{shoot_id}'
 
     browser = webdriver.Chrome(options=setting_chrome_options())
-    enable_download(browser)
+    enable_download()
 
-    shoot_link = autorization(shoot_id)  # авторизируюсь и получаю ссылку на данную съемку
+    shoot_link = autorization()  # авторизируюсь и получаю ссылку на данную съемку
     images_number = images_number_in_shot()  # int число с количеством снимков в съемке
     print(f'{images_number = }')
-    main_cycle(images_number, shoot_link)
+    main_cycle()
     time.sleep(15)
     browser.close()
     browser.quit()
+    system_notification(f'Work completed for shoot {shoot_id}', f'{images_number} files downloaded to {download_dir}')
