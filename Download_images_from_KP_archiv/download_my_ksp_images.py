@@ -13,8 +13,14 @@ from tkinter import filedialog
 
 
 def select_folder():
-    return filedialog.askdirectory(initialdir='/Volumes/big4photo-4/EDITED_JPEG_ARCHIV/Downloaded_from_fotoagency',
-                                   title="Select your Source directory")
+    choose_folder = filedialog.askdirectory(
+        initialdir='/Volumes/big4photo-4/EDITED_JPEG_ARCHIV/Downloaded_from_fotoagency',
+        title="Select your Source directory")
+    if len(choose_folder) > 0:
+        return choose_folder
+    else:
+        print("You don't choose folder. Program terminated")
+        exit()
 
 
 def setting_chrome_options():
