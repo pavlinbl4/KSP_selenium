@@ -1,23 +1,20 @@
 from openpyxl import load_workbook, Workbook
-from pathlib import Path
-from kommersant_dates import KommersantDates
 import os
 
 
-def create_report_file(report_date):
-    kd = KommersantDates()
-    month_name = kd.previous_month_name
-    report_folder = f'{Path.home()}/Documents/Kommersant/My_report_from_0107'
-    report_file_name = f"report_file_{month_name}_test.xlsx"
+def create_report_file(month_name, html_folder):
+    report_folder = html_folder[:-5]  # f'{Path.home()}/Documents/Kommersant/My_report_from_0107'
+    report_file_name = f"report_file_{month_name}.xlsx"
     path_to_file = f'{report_folder}/{report_file_name}'
 
     if os.path.exists(path_to_file):
         wb = load_workbook(path_to_file)  # файл есть и открываю его
-        ws = wb.create_sheet(report_date)  # добавляю новую таблицу
+        ws = wb.active
+        # ws = wb.create_sheet(report_date)  # добавляю новую таблицу
     else:
         wb = Workbook()  # если файла еще нет
         ws = wb.active  # если файла еще нет
-        ws.title = report_date  # если файла еще нет
+        ws.title = month_name  # если файла еще нет
 
     ws.column_dimensions['A'].width = 5
     ws.column_dimensions['B'].width = 25
