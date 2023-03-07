@@ -14,7 +14,7 @@ from create_report_file import create_report_file
 from datetime import datetime
 from date_with_custom_month import custom_month_date
 
-month_number = 1  # int(input('input months number'))
+month_number = 2  # int(input('input months number'))
 months_name, check_date, days_in_month, current_year = custom_month_date(month_number)
 
 # 2. нужно пройтись по всем дням месяца и получить данные о "засланных" снимках
